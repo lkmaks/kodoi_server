@@ -1,23 +1,32 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
-#include<QByteArray>
+#include <QByteArray>
+#include <vector>
 
-const int MESSAGE_LEN = 10;
+#include "helpers.h"
+#include "Board.h"
+#include "Room.h"
 
 enum class MessageType {
-    MOVE,
-    UNDO,
-    REDO,
-    UNDO_UNTIL,
-    INCORRECT
+    CREATE,
+    ENTER,
+    ACTION
 };
+
+const int MESSAGE_LEN = 28;
 
 struct Message
 {
-    Message(const QByteArray &arr);
-    MessageType mes_type;
-    std::pair<int, int> coords;
+    MessageType type;
+
+    RoomId room_id; // for ENTER / CREATE
+
+    BoardAction action; // for ACTION
+
+    SERIALIZE(type, room_id, action);
 };
+
+std::vector<Message> take_new_messages(QByteArray *arr);
 
 #endif // MESSAGE_H

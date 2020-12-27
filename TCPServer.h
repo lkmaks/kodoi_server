@@ -4,8 +4,10 @@
 #include <QObject>
 #include <QTcpSocket>
 #include <QTcpServer>
-#include <QHostAddress>
-#include <QAbstractSocket>
+#include <ClientSession.h>
+
+#include "Room.h"
+
 
 class TCPServer : public QObject
 {
@@ -23,10 +25,9 @@ public:
 private:
     int port_;
     QTcpServer *server_;
-    QList<QTcpSocket*> sockets_;
 
-    QByteArray data_;
-    int data_pos_;
+    std::map<QTcpSocket*, ClientSession*> sessions_;
+    Club *club_;
 };
 
 #endif // TCPSERVER_H
