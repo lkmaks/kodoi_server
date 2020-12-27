@@ -31,6 +31,7 @@ bool AbstractBoard::MakeMove(QPair<int, int> cell) {
         new_cell = CellType::BLACK;
     }
     board_arr_[cell.first][cell.second] = new_cell;
+    return true;
 }
 
 QPair<int, int> AbstractBoard::GetLastMove() {

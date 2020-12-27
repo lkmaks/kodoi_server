@@ -1,4 +1,4 @@
-QT -= gui
+QT += core gui
 QT += network
 
 CONFIG += c++11 console
@@ -33,4 +33,5 @@ HEADERS += \
     Response.h \
     Room.h \
     TCPServer.h \
-    helpers.h
+    helpers.h \
+    types.h

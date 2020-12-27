@@ -5,9 +5,10 @@
 #include <QMutex>
 
 #include "Room.h"
+#include "types.h"
 
 
-using RoomId = unsigned int;
+class Room;
 
 class Club
 {

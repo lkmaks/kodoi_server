@@ -6,7 +6,7 @@
 
 #include "helpers.h"
 #include "Board.h"
-#include "Room.h"
+#include "types.h"
 
 enum class MessageType {
     CREATE,

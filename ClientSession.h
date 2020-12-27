@@ -8,6 +8,8 @@
 #include "Message.h"
 #include "Response.h"
 
+class Club;
+class Room;
 
 class ClientSession
 {

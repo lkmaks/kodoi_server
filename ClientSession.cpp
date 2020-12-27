@@ -12,12 +12,13 @@ ClientSession::ClientSession(QTcpSocket *sock, Club *club) {
     room_ = nullptr;
 
     sock_ = sock;
-    data_ = {};
+    data_ = new QByteArray();
 }
 
 void ClientSession::onReadyRead() {
     // new data available on sock_
-    *data_ += sock_->readAll();
+    QByteArray new_data = sock_->readAll();
+    data_->append(new_data);
     auto new_messages = take_new_messages(data_);
     for (auto mes : new_messages) {
         Process(mes);

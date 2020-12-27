@@ -9,8 +9,9 @@ TCPServer::TCPServer(QObject *parent, int port) : QObject(parent), port_(port)
 }
 
 void TCPServer::onNewConnection() {
+    std::cerr << "new conn";
     QTcpSocket *clientSocket = server_->nextPendingConnection();
-    connect(clientSocket, &QTcpSocket::stateChanged, this, &TCPServer::onReadyRead);
+    connect(clientSocket, &QTcpSocket::readyRead, this, &TCPServer::onReadyRead);
     connect(clientSocket, &QTcpSocket::stateChanged, this, &TCPServer::onStateChanged);
     sessions_[clientSocket] = new ClientSession(clientSocket, club_);
 }
@@ -22,5 +23,9 @@ void TCPServer::onReadyRead() {
 }
 
 void TCPServer::onStateChanged(QAbstractSocket::SocketState state) {
-    // handle disconnection
+    std::cerr << "??" << std::endl;
+    QTcpSocket* sender = static_cast<QTcpSocket*>(QObject::sender());
+    sender->close();
+    sessions_[sender]->~ClientSession();
+    sessions_.erase(sender);
 }

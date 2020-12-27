@@ -6,6 +6,8 @@
 #include "Board.h"
 #include "ClientSession.h"
 
+class ClientSession;
+
 class Room
 {
 public:
