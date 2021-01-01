@@ -30,7 +30,8 @@ public:
     Board();
     EpochId GetEpochId();
     QMutex *GetMutex();
-    bool ApplyAction(BoardAction);
+    bool ApplyAction(BoardAction action, bool lock = true);
+    std::vector<BoardAction> GetInitSequence();
 private:
     QMutex *mutex_;
     EpochId epoch_id_;

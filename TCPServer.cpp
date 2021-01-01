@@ -9,7 +9,7 @@ TCPServer::TCPServer(QObject *parent, int port) : QObject(parent), port_(port)
 }
 
 void TCPServer::onNewConnection() {
-    std::cerr << "new conn";
+    std::cout << "new conn" << std::endl;
     QTcpSocket *clientSocket = server_->nextPendingConnection();
     connect(clientSocket, &QTcpSocket::readyRead, this, &TCPServer::onReadyRead);
     connect(clientSocket, &QTcpSocket::stateChanged, this, &TCPServer::onStateChanged);
@@ -23,9 +23,12 @@ void TCPServer::onReadyRead() {
 }
 
 void TCPServer::onStateChanged(QAbstractSocket::SocketState state) {
-    std::cerr << "??" << std::endl;
-    QTcpSocket* sender = static_cast<QTcpSocket*>(QObject::sender());
-    sender->close();
-    sessions_[sender]->~ClientSession();
-    sessions_.erase(sender);
+    if (state == QAbstractSocket::SocketState::UnconnectedState) {
+        std::cerr << "on state changed to unconnected" << std::endl;
+        QTcpSocket* sender = static_cast<QTcpSocket*>(QObject::sender());
+        sender->close();
+        club_->GetRoom(sessions_[sender]->GetRoomId())->RemoveSession(sessions_[sender]);
+        sessions_[sender]->~ClientSession();
+        sessions_.erase(sender);
+    }
 }

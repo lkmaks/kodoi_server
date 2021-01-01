@@ -26,6 +26,7 @@ struct Response
 
     static Response Ok();
     static Response Fail();
+    static Response Init(BoardAction);
     static Response Update(BoardAction);
 
     SERIALIZE(type, ok, action);

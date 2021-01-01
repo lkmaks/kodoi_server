@@ -13,8 +13,11 @@ class Room
 public:
     Room();
     const std::vector<ClientSession*> &GetSessions();
+    void AddSession(ClientSession *sess);
+    void RemoveSession(ClientSession *sess);
     Board *GetBoard();
 private:
+    QMutex *mutex_;
     std::vector<ClientSession*> sessions_;
     Board *board_;
 };

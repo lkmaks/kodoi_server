@@ -24,6 +24,7 @@ public:
     CellType GetCell(QPair<int, int> cell);
     StoneColor GetCurrentColor();
     int MovesCount();
+    QVector<QPair<int, int> > GetSequence(bool all = false);
 
     bool MakeMove(QPair<int, int> cell);
     bool Undo();

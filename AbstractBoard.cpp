@@ -90,6 +90,16 @@ int AbstractBoard::MovesCount() {
     return cur_seq_len_;
 }
 
+QVector<QPair<int, int> > AbstractBoard::GetSequence(bool all) {
+    int limit = (all ? sequence_.size() : cur_seq_len_);
+    QVector<QPair<int, int> > res;
+    for (int i = 0; i < limit; ++i) {
+        res.push_back(sequence_[i]);
+    }
+    return res;
+}
+
+
 bool AbstractBoard::IsCell(QPair<int, int> cell) {
     int i = cell.first, j = cell.second;
     return 0 <= i && i < board_size_ && 0 <= j && j < board_size_;

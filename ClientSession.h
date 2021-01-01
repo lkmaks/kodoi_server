@@ -21,8 +21,10 @@ public:
     void Respond(Response);
     void BroadcastToRoom(Response);
 
-private:
+    RoomId GetRoomId();
     bool JoinedRoom();
+
+private:
 
     Club *club_;
 

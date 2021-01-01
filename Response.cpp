@@ -12,6 +12,13 @@ Response Response::Fail() {
     return Response(false);
 }
 
+Response Response::Init(BoardAction action) {
+    Response res;
+    res.type = ResponseType::INIT;
+    res.action = action;
+    return res;
+}
+
 Response Response::Update(BoardAction action) {
     Response res;
     res.type = ResponseType::UPDATE;

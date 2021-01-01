@@ -38,7 +38,12 @@ void ClientSession::Process(Message mes) {
         else {
             room_id_ = mes.room_id;
             room_ = club_->GetRoom(room_id_);
+            room_->AddSession(this);
             Respond(Response::Ok());
+            Board *board = room_->GetBoard();
+            for (auto action : board->GetInitSequence()) {
+                Respond(Response::Init(action));
+            }
         }
         return;
     }
@@ -63,12 +68,12 @@ void ClientSession::Process(Message mes) {
 
     // to apply action epoch should match
     if (cur_board->GetEpochId() != cur_action.epoch_id) {
-        Respond(Response::Fail());
+        //Respond(Response::Fail()); -- for now
         return;
     }
 
     // epoch is right, try to apply action
-    bool ok = cur_board->ApplyAction(cur_action);
+    bool ok = cur_board->ApplyAction(cur_action, false);
     if (ok) {
         BroadcastToRoom(Response::Update(cur_action));
     }
@@ -76,6 +81,10 @@ void ClientSession::Process(Message mes) {
 
 bool ClientSession::JoinedRoom() {
     return room_ != nullptr;
+}
+
+RoomId ClientSession::GetRoomId() {
+    return room_id_;
 }
 
 void ClientSession::Respond(Response resp) {
