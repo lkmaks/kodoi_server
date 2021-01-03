@@ -15,7 +15,7 @@ class Club
 public:
     Club();
 
-    bool RoomExists(RoomId room_id);
+    bool RoomExists(RoomId room_id, bool lock = false);
     bool AddRoom(RoomId room_id);
     Room *GetRoom(RoomId room_id);
 

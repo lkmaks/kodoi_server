@@ -8,7 +8,7 @@
 #include "helpers.h"
 
 
-using EpochId = size_t;
+using EpochId = uint64_t;
 
 enum class BoardActionType {
     MOVE,
@@ -36,6 +36,8 @@ private:
     QMutex *mutex_;
     EpochId epoch_id_;
     AbstractBoard *board_;
+
+    bool ApplyActionNoLock(BoardAction action);
 };
 
 #endif // BOARD_H

@@ -17,11 +17,40 @@ QMutex *Board::GetMutex() {
 }
 
 bool Board::ApplyAction(BoardAction action, bool lock) {
-    // assume epoch matches board epoch
-
     if (lock) {
         QMutexLocker guard(mutex_);
+        return ApplyActionNoLock(action);
     }
+    else {
+        return ApplyActionNoLock(action);
+    }
+}
+
+std::vector<BoardAction> Board::GetInitSequence() {
+    QMutexLocker guard(mutex_);
+    std::vector<BoardAction> res;
+    for (auto move : board_->GetSequence(true)) {
+        BoardAction action;
+        action.type = BoardActionType::MOVE;
+        action.coords = move;
+        action.epoch_id = epoch_id_;
+        res.push_back(action);
+    }
+    int all_seq_len = (int)res.size();
+    for (int i = 0; i < all_seq_len - board_->MovesCount(); ++i) {
+        BoardAction action;
+        action.type = BoardActionType::UNDO;
+        action.epoch_id = epoch_id_;
+        res.push_back(action);
+    }
+    return res;
+}
+
+
+/// private
+
+bool Board::ApplyActionNoLock(BoardAction action) {
+    // assume epoch matches board epoch
 
     bool ok = false;
 
@@ -54,24 +83,4 @@ bool Board::ApplyAction(BoardAction action, bool lock) {
     std::cout << std::endl;
 
     return ok;
-}
-
-std::vector<BoardAction> Board::GetInitSequence() {
-    QMutexLocker guard(mutex_);
-    std::vector<BoardAction> res;
-    for (auto move : board_->GetSequence(true)) {
-        BoardAction action;
-        action.type = BoardActionType::MOVE;
-        action.coords = move;
-        action.epoch_id = epoch_id_;
-        res.push_back(action);
-    }
-    int all_seq_len = (int)res.size();
-    for (int i = 0; i < all_seq_len - board_->MovesCount(); ++i) {
-        BoardAction action;
-        action.type = BoardActionType::UNDO;
-        action.epoch_id = epoch_id_;
-        res.push_back(action);
-    }
-    return res;
 }

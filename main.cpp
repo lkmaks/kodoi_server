@@ -9,5 +9,7 @@ int main(int argc, char *argv[])
 
     TCPServer server(&a);
 
+    std::cerr << Serialize<Response>(Response()).size() << std::endl;
+
     return a.exec();
 }
