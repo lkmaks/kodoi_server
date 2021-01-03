@@ -15,6 +15,10 @@ ClientSession::ClientSession(QTcpSocket *sock, Club *club) {
     data_ = new QByteArray();
 }
 
+ClientSession::~ClientSession() {
+    delete data_;
+}
+
 void ClientSession::onReadyRead() {
     // new data available on sock_
     QByteArray new_data = sock_->readAll();
@@ -54,7 +58,7 @@ void ClientSession::Process(Message mes) {
     }
 
     // have to be in a room to make actions
-    if (!JoinedRoom()) {
+    if (!HasJoinedRoom()) {
         Respond(Response::Fail());
         return;
     }
@@ -79,7 +83,7 @@ void ClientSession::Process(Message mes) {
     }
 }
 
-bool ClientSession::JoinedRoom() {
+bool ClientSession::HasJoinedRoom() {
     return room_ != nullptr;
 }
 

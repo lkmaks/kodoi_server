@@ -15,6 +15,8 @@ class ClientSession
 {
 public:
     ClientSession(QTcpSocket *sock, Club *club);
+    ~ClientSession();
+
     void onReadyRead();
 
     void Process(Message);
@@ -22,7 +24,7 @@ public:
     void BroadcastToRoom(Response);
 
     RoomId GetRoomId();
-    bool JoinedRoom();
+    bool HasJoinedRoom();
 
 private:
 

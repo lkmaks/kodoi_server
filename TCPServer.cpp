@@ -27,7 +27,10 @@ void TCPServer::onStateChanged(QAbstractSocket::SocketState state) {
         std::cerr << "on state changed to unconnected" << std::endl;
         QTcpSocket* sender = static_cast<QTcpSocket*>(QObject::sender());
         sender->close();
-        club_->GetRoom(sessions_[sender]->GetRoomId())->RemoveSession(sessions_[sender]);
+        auto sess = sessions_[sender];
+        if (sess->HasJoinedRoom()) {
+            club_->GetRoom(sess->GetRoomId())->RemoveSession(sess);
+        }
         sessions_[sender]->~ClientSession();
         sessions_.erase(sender);
     }
