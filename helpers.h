@@ -4,6 +4,8 @@
 #include <string>
 #include <sstream>
 #include <cereal/archives/binary.hpp>
+#include <cereal/archives/json.hpp>
+#include <QByteArray>
 
 
 #define SERIALIZE(...)         \
@@ -15,38 +17,71 @@
 
 
 struct Archives {
-  using InputArchive = cereal::BinaryInputArchive;
-  using OutputArchive = cereal::BinaryOutputArchive;
+    using InputArchive = cereal::JSONInputArchive;
+    using OutputArchive = cereal::JSONOutputArchive;
+    using BinaryInputArchive = cereal::BinaryInputArchive;
+    using BinaryOutputArchive = cereal::BinaryOutputArchive;
 };
 
 
 template <typename T>
-std::string Serialize(const T& object) {
-  std::stringstream output;
-  {
-    Archives::OutputArchive oarchive(output);
-    oarchive(object);
-  }  // archive goes out of scope, ensuring all contents are flushed
+QByteArray Serialize(const T& object) {
+    std::stringstream output;
+    {
+        Archives::OutputArchive oarchive(output);
+        oarchive(object);
+    }  // archive goes out of scope, ensuring all contents are flushed
 
-  auto str = output.str();
-  return str;
+    auto str = output.str();
+    return QByteArray(str.c_str(), str.size());
 }
 
 
 template <typename T>
-T Deserialize(const std::string& bytes) {
-  // GlobalHeapScope g;
+T Deserialize(const QByteArray& bytes) {
+    std::string str = bytes.toStdString();
 
-  T object;
+    T object;
 
-  std::stringstream input(bytes);
-  {
-    Archives::InputArchive iarchive(input);
-    iarchive(object);  // Read the data from the archive
-  }
+    std::stringstream input(str);
+    {
+        Archives::InputArchive iarchive(input);
+        iarchive(object);
+    }  // archive goes out of scope, ensuring all contents are flushed
 
-  return object;
+    return object;
 }
+
+
+
+template <typename T>
+QByteArray SerializeBinary(const T& object) {
+    std::stringstream output;
+    {
+        Archives::BinaryOutputArchive oarchive(output);
+        oarchive(object);
+    }  // archive goes out of scope, ensuring all contents are flushed
+
+    auto str = output.str();
+    return QByteArray(str.c_str(), str.size());
+}
+
+
+template <typename T>
+T DeserializeBinary(const QByteArray& bytes) {
+    std::string str = bytes.toStdString();
+
+    T object;
+
+    std::stringstream input(str);
+    {
+        Archives::BinaryInputArchive iarchive(input);
+        iarchive(object);
+    }  // archive goes out of scope, ensuring all contents are flushed
+
+    return object;
+}
+
 
 
 #endif // HELPERS_H
