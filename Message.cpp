@@ -21,10 +21,25 @@ namespace Protocol {
     Message::Message(std::map<std::string, std::string> dict) : dict(dict) {}
 
 
+    Message Message::Status(bool status) {
+        return Message({{KEY_METHOD, METHOD_STATUS},
+                        {KEY_STATUS, (status ? VALUE_STATUS_OK : VALUE_STATUS_FAIL)}});
+    }
+
+    Message Message::Ok() {
+        return Message::Status(true);
+    }
+
+    Message Message::Fail() {
+        return Message::Status(false);
+    }
+
+
+    /// serialization / deserialization
+
     QByteArray serialize(const Message &mes) {
         QByteArray buf = Serialize<Message>(mes);
         QByteArray size_buf = SerializeBinary<MessageSizeType>(static_cast<MessageSizeType>(buf.size()));
-        auto x = buf.size();
         return size_buf + buf;
     }
 
@@ -38,8 +53,12 @@ namespace Protocol {
                 break;
             }
 
-            Message new_msg = Deserialize<Message>(arr->mid(ptr + message_pref_len, map_size));
-            result.push_back(new_msg);
+            try {
+                Message new_msg = Deserialize<Message>(arr->mid(ptr + message_pref_len, map_size));
+                result.push_back(new_msg);
+            } catch (std::exception e) {
+                std::cerr << "incoming message exception: " << e.what() << std::endl;
+            }
 
             ptr += message_pref_len + map_size;
         }

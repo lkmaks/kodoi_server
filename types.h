@@ -7,6 +7,6 @@
 
 #include "cereal/archives/binary.hpp"
 
-using RoomId = unsigned int;
+using RoomId = std::string;
 
 #endif // TYPES_H

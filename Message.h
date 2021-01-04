@@ -56,12 +56,49 @@ namespace Protocol {
     using Key = std::string;
     using Value = std::string;
 
-    struct Message {
+
+    const Key KEY_METHOD = "method";
+    const Key KEY_STATUS = "status";
+
+    const Value VALUE_STATUS_OK = "ok";
+    const Value VALUE_STATUS_FAIL = "fail";
+
+    const Value METHOD_CREATE = "create";
+    const Value METHOD_ENTER = "enter";
+    const Value METHOD_ACTION = "action";
+
+    const Value METHOD_INIT = "init";
+    const Value METHOD_UPDATE = "update";
+    const Value METHOD_STATUS = "status";
+
+
+    class Message {
         Message(std::map<std::string, std::string> dict = {});
 
-        std::map<Key, Value> dict;
+        bool IsCorrect();
+
+        bool has(Key key);
+        Value operator[](Key key);
+
+
+        // convinience constructors
+
+        static Message Status(bool status);
+        static Message Fail();
+        static Message Ok();
+
+        static Message Init(BoardAction action);
+        static Message Update(BoardAction action);
+
+
+        // convinience retrievers
+
+        BoardAction GetAction();
 
         SERIALIZE(dict);
+    private:
+        std::map<Key, Value> dict;
+
     };
 
     QByteArray serialize(const Message &mes);

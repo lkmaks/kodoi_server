@@ -6,10 +6,14 @@
 #include "Club.h"
 #include "Room.h"
 #include "Message.h"
-#include "Response.h"
 
 class Club;
 class Room;
+
+using Protocol::Message;
+using Protocol::take_new_messages;
+using Protocol::Key;
+using Protocol::Value;
 
 class ClientSession
 {
@@ -20,8 +24,8 @@ public:
     void onReadyRead();
 
     void Process(Message);
-    void Respond(Response);
-    void BroadcastToRoom(Response);
+    void Respond(Message);
+    void BroadcastToRoom(Message);
 
     RoomId GetRoomId();
     bool HasJoinedRoom();
@@ -30,7 +34,7 @@ private:
 
     Club *club_;
 
-    int room_id_;
+    RoomId room_id_;
     Room *room_;
 
     QTcpSocket *sock_;

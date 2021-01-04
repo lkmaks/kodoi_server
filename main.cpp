@@ -21,8 +21,13 @@ int main(int argc, char *argv[])
     Protocol::Message m(dc);
     Protocol::Message m2(dc2);
 
-    auto x = Protocol::serialize(m) + Protocol::serialize(m2) + QByteArray("aaa");
-    auto y = Protocol::take_new_messages(&x);
+    auto x = SerializeBinary<int>(10) + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+    try {
+        auto y = Protocol::take_new_messages(&x);
+    } catch (std::exception e) {
+        std::cerr << e.what() << std::endl;
+    }
 
     std::cerr << 1;
 }

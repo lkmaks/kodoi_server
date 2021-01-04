@@ -30,42 +30,48 @@ void ClientSession::onReadyRead() {
 }
 
 void ClientSession::Process(Message mes) {
-    if (mes.type == MessageType::CREATE) {
-        bool ok = club_->AddRoom(mes.room_id);
-        Respond(Response(ok));
+    if (!mes.IsCorrect()) {
         return;
     }
-    else if (mes.type == MessageType::ENTER) {
-        if (!club_->RoomExists(mes.room_id)) {
-            Respond(Response::Fail());
+    Value method = mes["type"];
+
+    if (method == Protocol::METHOD_CREATE) {
+        Value room_id;
+        bool ok = club_->AddRoom(mes["room_id"]);
+        Respond(Message::Status(ok));
+        return;
+    }
+    else if (method == Protocol::METHOD_ENTER) {
+        if (!club_->RoomExists(mes["room_id"])) {
+            Respond(Message::Fail());
         }
         else {
-            room_id_ = mes.room_id;
+            room_id_ = mes["room_id"];
             room_ = club_->GetRoom(room_id_);
             room_->AddSession(this);
-            Respond(Response::Ok());
+            Respond(Message::Ok());
             Board *board = room_->GetBoard();
             for (auto action : board->GetInitSequence()) {
-                Respond(Response::Init(action));
+                Respond(Message::Init(action));
             }
         }
         return;
     }
 
     // now all left to process is action case
-    if (mes.type != MessageType::ACTION) {
+    if (method != Protocol::METHOD_ACTION) {
         return;
     }
 
     // have to be in a room to make actions
     if (!HasJoinedRoom()) {
-        Respond(Response::Fail());
+        Respond(Message::Fail());
         return;
     }
 
     // current user is in a room
     Board *cur_board = room_->GetBoard();
-    BoardAction cur_action = mes.action;
+    BoardAction cur_action = mes.GetAction();
 
     // need to check epoch and commit action atomically, otherwise two actions with same epoch may commit
     QMutexLocker locker(cur_board->GetMutex());
@@ -79,7 +85,7 @@ void ClientSession::Process(Message mes) {
     // epoch is right, try to apply action
     bool ok = cur_board->ApplyAction(cur_action, false);
     if (ok) {
-        BroadcastToRoom(Response::Update(cur_action));
+        BroadcastToRoom(Message::Update(cur_action));
     }
 }
 
@@ -91,13 +97,11 @@ RoomId ClientSession::GetRoomId() {
     return room_id_;
 }
 
-void ClientSession::Respond(Response resp) {
-    std::string bytes_str = Serialize<Response>(resp);
-    QByteArray bytes(bytes_str.c_str(), bytes_str.size());
-    sock_->write(bytes);
+void ClientSession::Respond(Message resp) {
+    sock_->write(Serialize<Message>(resp));
 }
 
-void ClientSession::BroadcastToRoom(Response resp) {
+void ClientSession::BroadcastToRoom(Message resp) {
     for (auto sess : room_->GetSessions()) {
         sess->Respond(resp);
     }
