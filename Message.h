@@ -53,52 +53,68 @@
 
 namespace Protocol {
     using MessageSizeType = int;
-    using Key = std::string;
-    using Value = std::string;
+    using Key = QString;
+    using Value = QString;
 
 
     const Key KEY_METHOD = "method";
-    const Key KEY_STATUS = "status";
 
-    const Value VALUE_STATUS_OK = "ok";
-    const Value VALUE_STATUS_FAIL = "fail";
+    const Value METHOD_STATUS = "status";
+    const Value METHOD_INIT = "init";
+    const Value METHOD_UPDATE = "update";
 
     const Value METHOD_CREATE = "create";
     const Value METHOD_ENTER = "enter";
     const Value METHOD_ACTION = "action";
 
-    const Value METHOD_INIT = "init";
-    const Value METHOD_UPDATE = "update";
-    const Value METHOD_STATUS = "status";
+
+    const Key KEY_STATUS = "status";
+    const Value VALUE_STATUS_OK = "ok";
+    const Value VALUE_STATUS_FAIL = "fail";
+
+    const Key KEY_ACTION_TYPE = "action_type";
+    const Key KEY_ACTION_EPOCH_ID = "action_epoch";
+    const Key KEY_ACTION_COORD_1 = "action_x";
+    const Key KEY_ACTION_COORD_2 = "action_y";
+
+    const Key KEY_ROOM_ID = "room_id";
 
 
     class Message {
-        Message(std::map<std::string, std::string> dict = {});
-
-        bool IsCorrect();
+    public:
+        Message(std::map<Key, Value> dict_ = {});
 
         bool has(Key key);
-        Value operator[](Key key);
+        Value &operator[](Key key);
 
 
-        // convinience constructors
+        /// convinience constructors
 
+        // for server
         static Message Status(bool status);
-        static Message Fail();
         static Message Ok();
-
+        static Message Fail();
         static Message Init(BoardAction action);
         static Message Update(BoardAction action);
 
+        // for client
+        static Message Create(RoomId room_id);
+        static Message Enter(RoomId room_id);
+        static Message Action(BoardAction);
 
-        // convinience retrievers
+        /// convinience retrievers
 
         BoardAction GetAction();
 
-        SERIALIZE(dict);
-    private:
-        std::map<Key, Value> dict;
+        bool IsCorrect();
 
+        SERIALIZE(dict_);
+    private:
+        std::map<Key, Value> dict_;
+
+        static Message ActionMessage(BoardAction action);
+
+        bool ContainsCorrectAction();
     };
 
     QByteArray serialize(const Message &mes);

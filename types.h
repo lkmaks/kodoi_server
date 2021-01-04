@@ -7,6 +7,6 @@
 
 #include "cereal/archives/binary.hpp"
 
-using RoomId = std::string;
+using RoomId = QString;
 
 #endif // TYPES_H

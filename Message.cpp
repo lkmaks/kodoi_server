@@ -18,8 +18,24 @@
 namespace Protocol {
     const int message_pref_len = sizeof(MessageSizeType);
 
-    Message::Message(std::map<std::string, std::string> dict) : dict(dict) {}
+    Message::Message(std::map<Key, Value> dict) : dict_(dict) {}
 
+
+    /// normal methods
+
+    bool Message::has(Key key) {
+        return dict_.count(key);
+    }
+
+    Value &Message::operator[](Key key) {
+        return dict_[key];
+    }
+
+
+
+    /// constructors
+
+    // server
 
     Message Message::Status(bool status) {
         return Message({{KEY_METHOD, METHOD_STATUS},
@@ -34,8 +50,100 @@ namespace Protocol {
         return Message::Status(false);
     }
 
+    Message Message::Init(BoardAction action) {
+        auto msg = ActionMessage(action);
+        msg[KEY_METHOD] = METHOD_INIT;
+        return msg;
+    }
 
-    /// serialization / deserialization
+    Message Message::Update(BoardAction action) {
+        auto msg = ActionMessage(action);
+        msg[KEY_METHOD] = METHOD_UPDATE;
+        return msg;
+    }
+
+    // client
+
+    Message Message::Create(RoomId room_id) {
+        return Message({{KEY_METHOD, METHOD_CREATE},
+                        {KEY_ROOM_ID, room_id}});
+    }
+
+    Message Message::Enter(RoomId room_id) {
+        return Message({{KEY_METHOD, METHOD_ENTER},
+                        {KEY_ROOM_ID, room_id}});
+    }
+
+    Message Message::Action(BoardAction action) {
+        Message msg = ActionMessage(action);
+        msg[KEY_METHOD] = METHOD_ACTION;
+        return msg;
+    }
+
+
+    /// retrievers
+
+    BoardAction Message::GetAction() {
+        BoardAction res;
+        res.type = static_cast<BoardActionType>(dict_[KEY_ACTION_TYPE].toInt());
+        res.coords.first = dict_[KEY_ACTION_COORD_1].toInt();
+        res.coords.second = dict_[KEY_ACTION_COORD_2].toInt();
+        res.epoch_id = dict_[KEY_ACTION_EPOCH_ID].toULongLong(); // 32 bit ok?
+        return res;
+    }
+
+
+    /// corectness checker
+
+
+    bool Message::IsCorrect() {
+        if (!has(KEY_METHOD)) {
+            return false;
+        }
+        auto method = dict_[KEY_METHOD];
+        if (method == METHOD_STATUS) {
+            return has(KEY_STATUS) && (dict_[KEY_STATUS] == VALUE_STATUS_OK || dict_[KEY_STATUS] == VALUE_STATUS_FAIL);
+        }
+        else if (method == METHOD_UPDATE || method == METHOD_INIT) {
+            return ContainsCorrectAction();
+        }
+        /// TODO: create, enter, action
+        return true;
+    }
+
+
+    /// private
+
+    Message Message::ActionMessage(BoardAction action) {
+        Message msg;
+        msg[KEY_ACTION_TYPE] = QString::number(static_cast<int>(action.type));
+        msg[KEY_ACTION_COORD_1] = QString::number(action.coords.first);
+        msg[KEY_ACTION_COORD_2] = QString::number(action.coords.second);
+        msg[KEY_ACTION_EPOCH_ID] = QString::number(action.epoch_id);
+        return msg;
+    }
+
+
+    bool Message::ContainsCorrectAction() {
+        if (!(has(KEY_ACTION_TYPE) &&
+              has(KEY_ACTION_EPOCH_ID) &&
+              has(KEY_ACTION_COORD_1) &&
+              has(KEY_ACTION_COORD_2))) {
+            return false;
+        }
+
+        if (!check_int(dict_[KEY_ACTION_TYPE], 0, 4) ||
+            !check_ulonglong(dict_[KEY_ACTION_EPOCH_ID]) ||
+            !check_int(dict_[KEY_ACTION_COORD_1]) ||
+            !check_int(dict_[KEY_ACTION_COORD_2])) {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    /// serialization / deserialization functions
 
     QByteArray serialize(const Message &mes) {
         QByteArray buf = Serialize<Message>(mes);
