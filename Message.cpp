@@ -1,25 +1,26 @@
 #include <QString>
 #include <sstream>
-#include <cereal/archives/binary.hpp>
 
 #include "Message.h"
 
-//int get_type_len(MessageType type) {
-//    switch (type) {
-//        case MessageType::CREATE:
-//            return sizeof(CreateMessage);
-//        case MessageType::ENTER:
-//            return sizeof(EnterMessage);
-//        case MessageType::ACTION:
-//            return sizeof(BoardActionMessage);
-//    }
-//}
+#include "serialization.h"
+#include "helpers.h"
+
 
 namespace Protocol {
     const int message_pref_len = sizeof(MessageSizeType);
 
     Message::Message(std::map<Key, Value> dict) : dict_(dict) {}
 
+
+    /// serialization
+
+//    template <class Archive>
+//    void Message::serialize(Archive &ar) {
+//        {
+//          ar(CEREAL_NVP(dict_));
+//        }
+//    }
 
     /// normal methods
 
@@ -38,7 +39,7 @@ namespace Protocol {
     // server
 
     Message Message::Status(bool status) {
-        return Message({{KEY_METHOD, METHOD_STATUS},
+        return Message({{KEY_METHOD, VALUE_METHOD_STATUS},
                         {KEY_STATUS, (status ? VALUE_STATUS_OK : VALUE_STATUS_FAIL)}});
     }
 
@@ -52,31 +53,43 @@ namespace Protocol {
 
     Message Message::Init(BoardAction action) {
         auto msg = ActionMessage(action);
-        msg[KEY_METHOD] = METHOD_INIT;
+        msg[KEY_METHOD] = VALUE_METHOD_INIT;
         return msg;
     }
 
     Message Message::Update(BoardAction action) {
         auto msg = ActionMessage(action);
-        msg[KEY_METHOD] = METHOD_UPDATE;
+        msg[KEY_METHOD] = VALUE_METHOD_UPDATE;
         return msg;
+    }
+
+    Message Message::UserEntered(QString name) {
+        return Message({{KEY_METHOD, VALUE_METHOD_USER_ENTERED}, {KEY_USER_NAME, name}});
+    }
+
+    Message Message::UserLeft(QString name) {
+        return Message({{KEY_METHOD, VALUE_METHOD_USER_LEFT}, {KEY_USER_NAME, name}});
     }
 
     // client
 
+    Message Message::Message::GetRoomsList() {
+        return Message(Dict({{KEY_METHOD, VALUE_METHOD_ROOMS_LIST}}));
+    }
+
     Message Message::Create(RoomId room_id) {
-        return Message({{KEY_METHOD, METHOD_CREATE},
+        return Message({{KEY_METHOD, VALUE_METHOD_CREATE},
                         {KEY_ROOM_ID, room_id}});
     }
 
     Message Message::Enter(RoomId room_id) {
-        return Message({{KEY_METHOD, METHOD_ENTER},
+        return Message({{KEY_METHOD, VALUE_METHOD_ENTER},
                         {KEY_ROOM_ID, room_id}});
     }
 
     Message Message::Action(BoardAction action) {
         Message msg = ActionMessage(action);
-        msg[KEY_METHOD] = METHOD_ACTION;
+        msg[KEY_METHOD] = VALUE_METHOD_ACTION;
         return msg;
     }
 
@@ -101,10 +114,10 @@ namespace Protocol {
             return false;
         }
         auto method = dict_[KEY_METHOD];
-        if (method == METHOD_STATUS) {
+        if (method == VALUE_METHOD_STATUS) {
             return has(KEY_STATUS) && (dict_[KEY_STATUS] == VALUE_STATUS_OK || dict_[KEY_STATUS] == VALUE_STATUS_FAIL);
         }
-        else if (method == METHOD_UPDATE || method == METHOD_INIT) {
+        else if (method == VALUE_METHOD_UPDATE || method == VALUE_METHOD_INIT) {
             return ContainsCorrectAction();
         }
         /// TODO: create, enter, action
@@ -145,7 +158,7 @@ namespace Protocol {
 
     /// serialization / deserialization functions
 
-    QByteArray serialize(const Message &mes) {
+    QByteArray SerializeMessage(const Message &mes) {
         QByteArray buf = Serialize<Message>(mes);
         QByteArray size_buf = SerializeBinary<MessageSizeType>(static_cast<MessageSizeType>(buf.size()));
         return size_buf + buf;

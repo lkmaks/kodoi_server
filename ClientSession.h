@@ -6,6 +6,7 @@
 #include "Club.h"
 #include "Room.h"
 #include "Message.h"
+#include "LoginSystem.h"
 
 class Club;
 class Room;
@@ -31,14 +32,18 @@ public:
     bool HasJoinedRoom();
 
 private:
-
+    // essence
     Club *club_;
+    QTcpSocket *sock_;
+    QByteArray *data_;
+    LoginSystem *login_system_;
 
+    // context
     RoomId room_id_;
     Room *room_;
 
-    QTcpSocket *sock_;
-    QByteArray *data_;
+    QString name_;
+
 };
 
 #endif // CLIENTSESSION_H

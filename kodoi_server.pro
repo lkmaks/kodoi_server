@@ -13,9 +13,11 @@ SOURCES += \
         Board.cpp \
         ClientSession.cpp \
         Club.cpp \
+        LoginSystem.cpp \
         Message.cpp \
         Room.cpp \
         TCPServer.cpp \
+        helpers.cpp \
         main.cpp
 
 # Default rules for deployment.
@@ -28,10 +30,12 @@ HEADERS += \
     Board.h \
     ClientSession.h \
     Club.h \
+    LoginSystem.h \
     Message.h \
     Room.h \
     TCPServer.h \
     helpers.h \
+    serialization.h \
     types.h
 
 

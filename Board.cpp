@@ -1,5 +1,6 @@
 #include "Board.h"
 #include <QMutexLocker>
+#include <iostream>
 
 Board::Board()
 {

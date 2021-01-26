@@ -3,69 +3,35 @@
 
 #include <QByteArray>
 #include <vector>
-
-#include "helpers.h"
-#include "Board.h"
-#include "types.h"
-#include "cereal/types/map.hpp"
-
 #include <map>
 
 
-//enum class MessageType {
-//    CREATE,
-//    ENTER,
-//    ACTION
-//};
-
-//struct Message {
-//    MessageType type;
-
-//    Message(MessageType type);
-
-//    SERIALIZE(type);
-//};
-
-//struct CreateMessage : Message {
-//    RoomId room_id;
-
-//    CreateMessage(RoomId room_id = 1);
-
-//    SERIALIZE(type, room_id);
-//};
-
-//struct EnterMessage : Message {
-//    RoomId room_id;
-
-//    EnterMessage(RoomId room_id = 1);
-
-//    SERIALIZE(type, room_id);
-//};
-
-//struct BoardActionMessage : Message {
-//    BoardAction action;
-
-//    BoardActionMessage(BoardAction action);
-
-//    SERIALIZE(type, action);
-//};
+#include "types.h"
+#include "Board.h"
+#include "serialization.h"
 
 
 namespace Protocol {
     using MessageSizeType = int;
     using Key = QString;
     using Value = QString;
+    using Dict = std::map<Key, Value>;
 
 
     const Key KEY_METHOD = "method";
 
-    const Value METHOD_STATUS = "status";
-    const Value METHOD_INIT = "init";
-    const Value METHOD_UPDATE = "update";
+    const Value VALUE_METHOD_STATUS = "status";
+    const Value VALUE_METHOD_INIT = "init";
+    const Value VALUE_METHOD_UPDATE = "update";
+    const Value VALUE_METHOD_USER_ENTERED = "user_entered";
+    const Value VALUE_METHOD_USER_LEFT = "user_left";
 
-    const Value METHOD_CREATE = "create";
-    const Value METHOD_ENTER = "enter";
-    const Value METHOD_ACTION = "action";
+    const Value VALUE_METHOD_LOGIN = "login";
+    const Value VALUE_METHOD_ROOMS_LIST = "list";
+    const Value VALUE_METHOD_CREATE = "create";
+    const Value VALUE_METHOD_ENTER = "enter";
+    const Value VALUE_METHOD_LEAVE = "leave";
+    const Value VALUE_METHOD_ACTION = "action";
 
 
     const Key KEY_STATUS = "status";
@@ -79,6 +45,10 @@ namespace Protocol {
 
     const Key KEY_ROOM_ID = "room_id";
 
+    const Key KEY_LOGIN_NAME = "login_name";
+    const Key KEY_LOGIN_PASSWORD = "login_password";
+
+    const Key KEY_USER_NAME = "user_name"; // someone who makes an action, e.g. enter/leave room
 
     class Message {
     public:
@@ -96,10 +66,15 @@ namespace Protocol {
         static Message Fail();
         static Message Init(BoardAction action);
         static Message Update(BoardAction action);
+        static Message UserEntered(QString name);
+        static Message UserLeft(QString name);
 
         // for client
+        static Message Login(QString login, QString password);
+        static Message GetRoomsList();
         static Message Create(RoomId room_id);
         static Message Enter(RoomId room_id);
+        static Message Leave(RoomId room_id);
         static Message Action(BoardAction);
 
         /// convinience retrievers
@@ -108,16 +83,18 @@ namespace Protocol {
 
         bool IsCorrect();
 
+//        template <class Archive>
+//        void serialize(Archive &ar);
         SERIALIZE(dict_);
     private:
-        std::map<Key, Value> dict_;
+        Dict dict_;
 
         static Message ActionMessage(BoardAction action);
 
         bool ContainsCorrectAction();
     };
 
-    QByteArray serialize(const Message &mes);
+    QByteArray SerializeMessage(const Message &mes);
     std::vector<Message> take_new_messages(QByteArray *arr);
 }
 
