@@ -3,6 +3,7 @@
 TCPServer::TCPServer(QObject *parent, int port) : QObject(parent), port_(port)
 {
     club_ = new Club();
+    login_system_ = new LoginSystem();
     server_ = new QTcpServer(this);
     connect(server_, &QTcpServer::newConnection, this, &TCPServer::onNewConnection);
     server_->listen(QHostAddress::Any, port_);
@@ -13,7 +14,8 @@ void TCPServer::onNewConnection() {
     QTcpSocket *clientSocket = server_->nextPendingConnection();
     connect(clientSocket, &QTcpSocket::readyRead, this, &TCPServer::onReadyRead);
     connect(clientSocket, &QTcpSocket::stateChanged, this, &TCPServer::onStateChanged);
-    sessions_[clientSocket] = new ClientSession(clientSocket, club_);
+    sessions_[clientSocket] = new ClientSession(clientSocket, club_, login_system_);
+    club_->AddToLobby(sessions_[clientSocket]);
 }
 
 void TCPServer::onReadyRead() {

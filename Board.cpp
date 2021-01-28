@@ -2,22 +2,22 @@
 #include <QMutexLocker>
 #include <iostream>
 
-Board::Board()
+OnlineBoard::OnlineBoard()
 {
     mutex_ = new QMutex();
     epoch_id_ = 0;
     board_ = new AbstractBoard();
 }
 
-EpochId Board::GetEpochId() {
+EpochId OnlineBoard::GetEpochId() {
     return epoch_id_;
 }
 
-QMutex *Board::GetMutex() {
+QMutex *OnlineBoard::GetMutex() {
     return mutex_;
 }
 
-bool Board::ApplyAction(BoardAction action, bool lock) {
+bool OnlineBoard::ApplyAction(BoardAction action, bool lock) {
     if (lock) {
         QMutexLocker guard(mutex_);
         return ApplyActionNoLock(action);
@@ -27,7 +27,7 @@ bool Board::ApplyAction(BoardAction action, bool lock) {
     }
 }
 
-std::vector<BoardAction> Board::GetInitSequence() {
+std::vector<BoardAction> OnlineBoard::GetInitSequence() {
     QMutexLocker guard(mutex_);
     std::vector<BoardAction> res;
     for (auto move : board_->GetSequence(true)) {
@@ -50,7 +50,7 @@ std::vector<BoardAction> Board::GetInitSequence() {
 
 /// private
 
-bool Board::ApplyActionNoLock(BoardAction action) {
+bool OnlineBoard::ApplyActionNoLock(BoardAction action) {
     // assume epoch matches board epoch
 
     bool ok = false;

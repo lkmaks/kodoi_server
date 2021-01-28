@@ -13,7 +13,7 @@ class TCPServer : public QObject
 {
     Q_OBJECT
 public:
-    explicit TCPServer(QObject *parent = nullptr, int port = 12345);
+    explicit TCPServer(QObject *parent, int port = 12345);
 
     /// slots
     void onNewConnection();
@@ -28,6 +28,7 @@ private:
 
     std::map<QTcpSocket*, ClientSession*> sessions_;
     Club *club_;
+    LoginSystem *login_system_;
 };
 
 #endif // TCPSERVER_H

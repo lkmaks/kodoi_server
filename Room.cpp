@@ -4,7 +4,7 @@
 Room::Room()
 {
     mutex_ = new QMutex();
-    board_ = new Board();
+    board_ = new OnlineBoard();
 }
 
 const std::vector<ClientSession*> &Room::GetSessions() {
@@ -22,6 +22,6 @@ void Room::RemoveSession(ClientSession *sess) {
     sessions_.erase(std::find(sessions_.begin(), sessions_.end(), sess));
 }
 
-Board *Room::GetBoard() {
+OnlineBoard *Room::GetBoard() {
     return board_;
 }

@@ -1,12 +1,10 @@
 #include "LoginSystem.h"
 
-#include <QTextStream>
+#include <fstream>
 
 
-LoginSystem::LoginSystem() : file_("users.txt")
-{
-    file_.open(QIODevice::ReadWrite);
-}
+LoginSystem::LoginSystem() : filename_("users.txt"), guest_id_(0) {}
+
 
 bool LoginSystem::TryLogin(const QString &name, const QString &password) {
     bool exists;
@@ -18,24 +16,49 @@ bool LoginSystem::TryLogin(const QString &name, const QString &password) {
     else if (actual_password == password) {
         return true;
     }
+
+    return false;
 }
 
 
+QString LoginSystem::MakeGuestName() {
+    QString name = "guest" + QString::number(guest_id_);
+    AddUser(name, "", true);
+    return name;
+}
+
+
+/// private
+
 QString LoginSystem::GetPassword(const QString &name, bool &exists) {
-    QTextStream in(&file_);
-    while (!in.atEnd())
-    {
-        QString line = in.readLine();
-        auto vec = line.split(';');
+    std::ifstream fin;
+    fin.open(filename_);
+
+    while (!fin.eof()) {
+        std::string line;
+        getline(fin, line);
+        auto vec = QString::fromUtf8(line.c_str()).split(';');
         if (name == vec[0]) {
             exists = true;
             return vec[1];
         }
     }
     exists = false;
+
+    fin.close();
+
     return "";
 }
 
 void LoginSystem::AddUser(const QString &name, const QString &password, bool only_username) {
-    // need to append to file: name;password
+    std::ofstream fout;
+    fout.open(filename_, std::ios_base::app);
+
+    fout << name.toStdString();
+    if (!only_username) {
+        fout << ";" << password.toStdString();
+    }
+    fout << std::endl;
+
+    fout.close();
 }

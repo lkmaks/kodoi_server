@@ -28,6 +28,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     AbstractBoard.h \
     Board.h \
+    BoardAction.h \
     ClientSession.h \
     Club.h \
     LoginSystem.h \

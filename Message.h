@@ -7,7 +7,7 @@
 
 
 #include "types.h"
-#include "Board.h"
+#include "BoardAction.h"
 #include "serialization.h"
 
 
@@ -25,6 +25,7 @@ namespace Protocol {
     const Value VALUE_METHOD_UPDATE = "update";
     const Value VALUE_METHOD_USER_ENTERED = "user_entered";
     const Value VALUE_METHOD_USER_LEFT = "user_left";
+    const Value VALUE_METHOD_ROOM_ADDED = "room_added";
 
     const Value VALUE_METHOD_LOGIN = "login";
     const Value VALUE_METHOD_ROOMS_LIST = "list";
@@ -32,6 +33,7 @@ namespace Protocol {
     const Value VALUE_METHOD_ENTER = "enter";
     const Value VALUE_METHOD_LEAVE = "leave";
     const Value VALUE_METHOD_ACTION = "action";
+    const Value VALUE_METHOD_NEED_INIT = "need_init";
 
 
     const Key KEY_STATUS = "status";
@@ -48,7 +50,8 @@ namespace Protocol {
     const Key KEY_LOGIN_NAME = "login_name";
     const Key KEY_LOGIN_PASSWORD = "login_password";
 
-    const Key KEY_USER_NAME = "user_name"; // someone who makes an action, e.g. enter/leave room
+    const Key KEY_USER_ENTER_NAME = "user_enter_name";
+    const Key KEY_USER_LEAVE_NAME = "user_leave_name";
 
     class Message {
     public:
@@ -68,23 +71,26 @@ namespace Protocol {
         static Message Update(BoardAction action);
         static Message UserEntered(QString name);
         static Message UserLeft(QString name);
+        static Message RoomAdded(QString name);
+
 
         // for client
         static Message Login(QString login, QString password);
-        static Message GetRoomsList();
-        static Message Create(RoomId room_id);
+        static Message RoomsList();
+        static Message CreateRoom(RoomId room_id);
         static Message Enter(RoomId room_id);
         static Message Leave(RoomId room_id);
         static Message Action(BoardAction);
+        static Message NeedInit();
 
         /// convinience retrievers
 
         BoardAction GetAction();
+        QString GetRoomId();
+        QString GetStatus();
 
         bool IsCorrect();
 
-//        template <class Archive>
-//        void serialize(Archive &ar);
         SERIALIZE(dict_);
     private:
         Dict dict_;

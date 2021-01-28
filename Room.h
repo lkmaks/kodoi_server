@@ -15,11 +15,11 @@ public:
     const std::vector<ClientSession*> &GetSessions();
     void AddSession(ClientSession *sess);
     void RemoveSession(ClientSession *sess);
-    Board *GetBoard();
+    OnlineBoard *GetBoard();
 private:
     QMutex *mutex_;
     std::vector<ClientSession*> sessions_;
-    Board *board_;
+    OnlineBoard *board_;
 };
 
 #endif // ROOM_H

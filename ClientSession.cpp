@@ -5,7 +5,7 @@
 #include "helpers.h"
 
 
-ClientSession::ClientSession(QTcpSocket *sock, Club *club) {
+ClientSession::ClientSession(QTcpSocket *sock, Club *club, LoginSystem *login_system) {
     club_ = club;
 
     room_id_ = -1;
@@ -14,6 +14,7 @@ ClientSession::ClientSession(QTcpSocket *sock, Club *club) {
     sock_ = sock;
     data_ = new QByteArray();
 
+    login_system_ = login_system;
     name_ = login_system_->MakeGuestName();
 }
 
@@ -37,17 +38,29 @@ void ClientSession::Process(Message mes) {
     }
     Value method = mes[Protocol::KEY_METHOD];
 
-    if (method == Protocol::VALUE_METHOD_LOGIN) {
+    if (method == Protocol::VALUE_METHOD_ROOMS_LIST) {
+        for (auto pr : club_->GetRooms()) {
+            Respond(Message::RoomAdded(pr.first));
+        }
+    }
+    else if (method == Protocol::VALUE_METHOD_LOGIN) {
         auto name = mes[Protocol::KEY_LOGIN_NAME];
         auto password = mes[Protocol::KEY_LOGIN_PASSWORD];
         if (login_system_->TryLogin(name, password)) {
             name_ = name;
         }
     }
-    if (method == Protocol::VALUE_METHOD_CREATE) {
-        Value room_id;
-        bool ok = club_->AddRoom(mes[Protocol::KEY_ROOM_ID]);
-        Respond(Message::Status(ok));
+    else if (method == Protocol::VALUE_METHOD_CREATE) {
+        Value room_id = mes[Protocol::KEY_ROOM_ID];
+        bool ok = club_->AddRoom(room_id);
+        if (ok) {
+            for (auto sess : club_->GetLobbyList()) {
+                RespondTo(Message::RoomAdded(room_id), sess);
+            }
+        }
+        else {
+            Respond(Message::Fail());
+        }
         return;
     }
     else if (method == Protocol::VALUE_METHOD_ENTER) {
@@ -59,18 +72,28 @@ void ClientSession::Process(Message mes) {
             room_ = club_->GetRoom(room_id_);
             room_->AddSession(this);
             Respond(Message::Ok());
-            Board *board = room_->GetBoard();
-            for (auto action : board->GetInitSequence()) {
-                Respond(Message::Init(action));
-            }
             BroadcastToRoom(Message::UserEntered(name_));
         }
         return;
     }
     else if (method == Protocol::VALUE_METHOD_LEAVE) {
+        if (room_ == nullptr) {
+            Respond(Message::Fail());
+        }
+
         room_->RemoveSession(this);
+        Respond(Message::Ok());
+        BroadcastToRoom(Message::UserLeft(name_));
+
         room_id_ = -1;
         room_ = nullptr;
+
+    }
+    else if (method == Protocol::VALUE_METHOD_NEED_INIT) {
+        OnlineBoard *board = room_->GetBoard();
+        for (auto action : board->GetInitSequence()) {
+            Respond(Message::Init(action));
+        }
     }
 
     // now all left to process is action case
@@ -85,7 +108,7 @@ void ClientSession::Process(Message mes) {
     }
 
     // current user is in a room
-    Board *cur_board = room_->GetBoard();
+    OnlineBoard *cur_board = room_->GetBoard();
     BoardAction cur_action = mes.GetAction();
 
     // need to check epoch and commit action atomically, otherwise two actions with same epoch may commit
@@ -99,6 +122,7 @@ void ClientSession::Process(Message mes) {
 
     // epoch is right, try to apply action
     bool ok = cur_board->ApplyAction(cur_action, false);
+    cur_action.epoch_id++;
     if (ok) {
         BroadcastToRoom(Message::Update(cur_action));
     }
@@ -116,8 +140,18 @@ void ClientSession::Respond(Message resp) {
     sock_->write(SerializeMessage(resp));
 }
 
+void ClientSession::RespondTo(Message resp, ClientSession *sess) {
+    sess->Respond(resp);
+}
+
 void ClientSession::BroadcastToRoom(Message resp) {
     for (auto sess : room_->GetSessions()) {
+        sess->Respond(resp);
+    }
+}
+
+void ClientSession::BroadcastToRoom(Message resp, RoomId room_id) {
+    for (auto sess : club_->GetRoom(room_id)->GetSessions()) {
         sess->Respond(resp);
     }
 }

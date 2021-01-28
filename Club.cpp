@@ -29,8 +29,20 @@ bool Club::AddRoom(RoomId room_id) {
     }
 }
 
+void Club::AddToLobby(ClientSession *sess) {
+    lobby_.push_back(sess);
+}
+
 
 Room *Club::GetRoom(RoomId room_id) {
     QMutexLocker lock_guard(mutex_);
     return rooms_[room_id];
+}
+
+std::map<RoomId, Room*> Club::GetRooms() {
+    return rooms_;
+}
+
+std::vector<ClientSession*> Club::GetLobbyList() {
+    return lobby_;
 }

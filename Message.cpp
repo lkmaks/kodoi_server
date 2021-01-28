@@ -12,16 +12,6 @@ namespace Protocol {
 
     Message::Message(std::map<Key, Value> dict) : dict_(dict) {}
 
-
-    /// serialization
-
-//    template <class Archive>
-//    void Message::serialize(Archive &ar) {
-//        {
-//          ar(CEREAL_NVP(dict_));
-//        }
-//    }
-
     /// normal methods
 
     bool Message::has(Key key) {
@@ -31,7 +21,6 @@ namespace Protocol {
     Value &Message::operator[](Key key) {
         return dict_[key];
     }
-
 
 
     /// constructors
@@ -64,20 +53,28 @@ namespace Protocol {
     }
 
     Message Message::UserEntered(QString name) {
-        return Message({{KEY_METHOD, VALUE_METHOD_USER_ENTERED}, {KEY_USER_NAME, name}});
+        return Message({{KEY_METHOD, VALUE_METHOD_USER_ENTERED}, {KEY_USER_ENTER_NAME, name}});
     }
 
     Message Message::UserLeft(QString name) {
-        return Message({{KEY_METHOD, VALUE_METHOD_USER_LEFT}, {KEY_USER_NAME, name}});
+        return Message({{KEY_METHOD, VALUE_METHOD_USER_LEFT}, {KEY_USER_LEAVE_NAME, name}});
+    }
+
+    Message Message::RoomAdded(QString name) {
+        return Message({{KEY_METHOD, VALUE_METHOD_ROOM_ADDED}, {KEY_ROOM_ID, name}});
     }
 
     // client
 
-    Message Message::Message::GetRoomsList() {
+    Message Message::Login(QString name, QString password) {
+        return Message({{KEY_METHOD, VALUE_METHOD_LOGIN}, {KEY_LOGIN_NAME, name}, {KEY_LOGIN_PASSWORD, password}});
+    }
+
+    Message Message::RoomsList() {
         return Message(Dict({{KEY_METHOD, VALUE_METHOD_ROOMS_LIST}}));
     }
 
-    Message Message::Create(RoomId room_id) {
+    Message Message::CreateRoom(RoomId room_id) {
         return Message({{KEY_METHOD, VALUE_METHOD_CREATE},
                         {KEY_ROOM_ID, room_id}});
     }
@@ -87,10 +84,19 @@ namespace Protocol {
                         {KEY_ROOM_ID, room_id}});
     }
 
+    Message Message::Leave(RoomId room_id) {
+        return Message({{KEY_METHOD, VALUE_METHOD_LEAVE},
+                        {KEY_ROOM_ID, room_id}});
+    }
+
     Message Message::Action(BoardAction action) {
         Message msg = ActionMessage(action);
         msg[KEY_METHOD] = VALUE_METHOD_ACTION;
         return msg;
+    }
+
+    Message Message::NeedInit() {
+        return Message(Dict({{KEY_METHOD, VALUE_METHOD_NEED_INIT}}));
     }
 
 
@@ -103,6 +109,14 @@ namespace Protocol {
         res.coords.second = dict_[KEY_ACTION_COORD_2].toInt();
         res.epoch_id = dict_[KEY_ACTION_EPOCH_ID].toULongLong(); // 32 bit ok?
         return res;
+    }
+
+    QString Message::GetRoomId() {
+        return dict_[KEY_ROOM_ID];
+    }
+
+    QString Message::GetStatus() {
+        return dict_[KEY_STATUS];
     }
 
 

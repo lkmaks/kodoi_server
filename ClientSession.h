@@ -19,14 +19,16 @@ using Protocol::Value;
 class ClientSession
 {
 public:
-    ClientSession(QTcpSocket *sock, Club *club);
+    ClientSession(QTcpSocket *sock, Club *club, LoginSystem *login_system);
     ~ClientSession();
 
     void onReadyRead();
 
     void Process(Message);
     void Respond(Message);
+    void RespondTo(Message, ClientSession *sess);
     void BroadcastToRoom(Message);
+    void BroadcastToRoom(Message, RoomId);
 
     RoomId GetRoomId();
     bool HasJoinedRoom();

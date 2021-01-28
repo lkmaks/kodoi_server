@@ -5,28 +5,12 @@
 #include <QMutex>
 
 #include "AbstractBoard.h"
+#include "BoardAction.h"
 
-
-using EpochId = uint64_t;
-
-enum class BoardActionType {
-    MOVE,
-    UNDO,
-    REDO,
-    UNDO_UNTIL
-};
-
-struct BoardAction {
-    BoardActionType type;
-    QPair<int, int> coords; // for move, undo_until
-    EpochId epoch_id; // epoch to which this action is meant to apply
-//    SERIALIZE(type, coords.first, coords.second, epoch_id);
-};
-
-class Board
+class OnlineBoard
 {
 public:
-    Board();
+    OnlineBoard();
     EpochId GetEpochId();
     QMutex *GetMutex();
     bool ApplyAction(BoardAction action, bool lock = true);
