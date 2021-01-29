@@ -23,6 +23,7 @@ bool LoginSystem::TryLogin(const QString &name, const QString &password) {
 
 QString LoginSystem::MakeGuestName() {
     QString name = "guest" + QString::number(guest_id_);
+    guest_id_++;
     AddUser(name, "", true);
     return name;
 }

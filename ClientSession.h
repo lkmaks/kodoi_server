@@ -45,7 +45,7 @@ private:
     Room *room_;
 
     QString name_;
-
+    bool wants_broadcast_;
 };
 
 #endif // CLIENTSESSION_H

@@ -10,12 +10,12 @@ ClientSession::ClientSession(QTcpSocket *sock, Club *club, LoginSystem *login_sy
 
     room_id_ = -1;
     room_ = nullptr;
+    wants_broadcast_ = false;
 
     sock_ = sock;
     data_ = new QByteArray();
 
     login_system_ = login_system;
-    name_ = login_system_->MakeGuestName();
 }
 
 ClientSession::~ClientSession() {
@@ -42,12 +42,25 @@ void ClientSession::Process(Message mes) {
         for (auto pr : club_->GetRooms()) {
             Respond(Message::RoomAdded(pr.first));
         }
+        wants_broadcast_ = true;
     }
     else if (method == Protocol::VALUE_METHOD_LOGIN) {
+        bool is_guest = (mes[Protocol::KEY_LOGIN_AS_GUEST] == Protocol::VALUE_LOGIN_AS_GUEST_YES);
+        if (is_guest) {
+            name_ = login_system_->MakeGuestName();
+            Respond(Message::GuestName(name_));
+            return;
+        }
+
         auto name = mes[Protocol::KEY_LOGIN_NAME];
         auto password = mes[Protocol::KEY_LOGIN_PASSWORD];
+
         if (login_system_->TryLogin(name, password)) {
             name_ = name;
+            Respond(Message::Ok());
+        }
+        else {
+            Respond(Message::Fail());
         }
     }
     else if (method == Protocol::VALUE_METHOD_CREATE) {
@@ -71,6 +84,8 @@ void ClientSession::Process(Message mes) {
         else {
             room_ = club_->GetRoom(room_id_);
             room_->AddSession(this);
+
+            wants_broadcast_ = false;
             Respond(Message::Ok());
             BroadcastToRoom(Message::UserEntered(name_));
         }
@@ -82,18 +97,20 @@ void ClientSession::Process(Message mes) {
         }
 
         room_->RemoveSession(this);
-        Respond(Message::Ok());
         BroadcastToRoom(Message::UserLeft(name_));
 
         room_id_ = -1;
         room_ = nullptr;
 
+        wants_broadcast_ = false;
+        Respond(Message::Ok());
     }
     else if (method == Protocol::VALUE_METHOD_NEED_INIT) {
         OnlineBoard *board = room_->GetBoard();
         for (auto action : board->GetInitSequence()) {
             Respond(Message::Init(action));
         }
+        wants_broadcast_ = true;
     }
 
     // now all left to process is action case
@@ -152,6 +169,8 @@ void ClientSession::BroadcastToRoom(Message resp) {
 
 void ClientSession::BroadcastToRoom(Message resp, RoomId room_id) {
     for (auto sess : club_->GetRoom(room_id)->GetSessions()) {
-        sess->Respond(resp);
+        if (sess->wants_broadcast_) {
+            sess->Respond(resp);
+        }
     }
 }
